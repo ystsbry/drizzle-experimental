@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { closeDb, db } from '../db/client';
-import { employees } from '../db/schema';
+import { companies, employees } from '../db/schema';
 
 interface CreateEmployeeData {
   firstName: string;
@@ -11,6 +11,7 @@ interface CreateEmployeeData {
   position: string;
   hireDate: string;
   salary: number;
+  companyId: string;
   isActive?: boolean;
 }
 
@@ -23,6 +24,7 @@ interface UpdateEmployeeData {
   position?: string;
   hireDate?: string;
   salary?: number;
+  companyId?: string;
   isActive?: boolean;
 }
 
@@ -39,6 +41,7 @@ export async function createEmployee(data: CreateEmployeeData) {
         position: data.position,
         hireDate: data.hireDate,
         salary: data.salary,
+        companyId: data.companyId,
         isActive: data.isActive ?? true,
       })
       .returning();
@@ -55,7 +58,30 @@ export async function createEmployee(data: CreateEmployeeData) {
 
 export async function getAllEmployees() {
   try {
-    const result = await db.select().from(employees);
+    const result = await db
+      .select({
+        id: employees.id,
+        firstName: employees.firstName,
+        lastName: employees.lastName,
+        email: employees.email,
+        phoneNumber: employees.phoneNumber,
+        department: employees.department,
+        position: employees.position,
+        hireDate: employees.hireDate,
+        salary: employees.salary,
+        isActive: employees.isActive,
+        companyId: employees.companyId,
+        createdAt: employees.createdAt,
+        updatedAt: employees.updatedAt,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          slug: companies.slug,
+          domain: companies.domain,
+        },
+      })
+      .from(employees)
+      .leftJoin(companies, eq(employees.companyId, companies.id));
     console.log(`Found ${result.length} employees`);
     return result;
   } catch (error) {
@@ -68,7 +94,31 @@ export async function getAllEmployees() {
 
 export async function getEmployeeById(id: string) {
   try {
-    const result = await db.select().from(employees).where(eq(employees.id, id));
+    const result = await db
+      .select({
+        id: employees.id,
+        firstName: employees.firstName,
+        lastName: employees.lastName,
+        email: employees.email,
+        phoneNumber: employees.phoneNumber,
+        department: employees.department,
+        position: employees.position,
+        hireDate: employees.hireDate,
+        salary: employees.salary,
+        isActive: employees.isActive,
+        companyId: employees.companyId,
+        createdAt: employees.createdAt,
+        updatedAt: employees.updatedAt,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          slug: companies.slug,
+          domain: companies.domain,
+        },
+      })
+      .from(employees)
+      .leftJoin(companies, eq(employees.companyId, companies.id))
+      .where(eq(employees.id, id));
 
     if (result.length === 0) {
       console.log(`No employee found with id: ${id}`);
@@ -116,6 +166,7 @@ export async function updateEmployee(id: string, data: UpdateEmployeeData) {
     if (data.position !== undefined) updateData.position = data.position;
     if (data.hireDate !== undefined) updateData.hireDate = data.hireDate;
     if (data.salary !== undefined) updateData.salary = data.salary;
+    if (data.companyId !== undefined) updateData.companyId = data.companyId;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     updateData.updatedAt = new Date();
@@ -210,11 +261,55 @@ export async function getActiveEmployees() {
   }
 }
 
+export async function getEmployeesByCompany(companyId: string) {
+  try {
+    const result = await db
+      .select({
+        id: employees.id,
+        firstName: employees.firstName,
+        lastName: employees.lastName,
+        email: employees.email,
+        phoneNumber: employees.phoneNumber,
+        department: employees.department,
+        position: employees.position,
+        hireDate: employees.hireDate,
+        salary: employees.salary,
+        isActive: employees.isActive,
+        companyId: employees.companyId,
+        createdAt: employees.createdAt,
+        updatedAt: employees.updatedAt,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          slug: companies.slug,
+          domain: companies.domain,
+        },
+      })
+      .from(employees)
+      .leftJoin(companies, eq(employees.companyId, companies.id))
+      .where(eq(employees.companyId, companyId));
+
+    console.log(`Found ${result.length} employees for company ${companyId}`);
+    return result;
+  } catch (error) {
+    console.error('Error fetching employees by company:', error);
+    throw error;
+  } finally {
+    await closeDb();
+  }
+}
+
 if (import.meta.main) {
   const action = Bun.argv[2];
 
   switch (action) {
     case 'create': {
+      const companyId = Bun.argv[3];
+      if (!companyId) {
+        console.error('Please provide a company ID');
+        console.log('First create a company using: bun src/cmd/companies.ts create');
+        process.exit(1);
+      }
       const randomNum = Math.floor(Math.random() * 10000);
       await createEmployee({
         firstName: 'Jane',
@@ -225,6 +320,7 @@ if (import.meta.main) {
         position: 'Sales Manager',
         hireDate: '2024-03-20',
         salary: 75000,
+        companyId: companyId,
         isActive: true,
       });
       break;
@@ -306,13 +402,25 @@ if (import.meta.main) {
       break;
     }
 
+    case 'read-company': {
+      const companyId = Bun.argv[3];
+      if (!companyId) {
+        console.error('Please provide a company ID');
+        process.exit(1);
+      }
+      const companyEmployees = await getEmployeesByCompany(companyId);
+      console.table(companyEmployees);
+      break;
+    }
+
     default:
       console.log(`
 Usage:
-  bun src/cmd/employees.ts create                    - Create a sample employee
+  bun src/cmd/employees.ts create <companyId>        - Create a sample employee
   bun src/cmd/employees.ts read-all                  - Get all employees
   bun src/cmd/employees.ts read-id <id>              - Get employee by ID
   bun src/cmd/employees.ts read-email <email>        - Get employee by email
+  bun src/cmd/employees.ts read-company <companyId>  - Get employees by company
   bun src/cmd/employees.ts update <id>               - Update employee (sample update)
   bun src/cmd/employees.ts delete <id>               - Delete employee
   bun src/cmd/employees.ts soft-delete <id>          - Soft delete employee (set isActive to false)
