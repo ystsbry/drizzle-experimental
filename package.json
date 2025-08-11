@@ -3,8 +3,16 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "fix": "biome check --write ."
+  },
   "devDependencies": {
+    "@biomejs/biome": "^2.1.4",
     "@types/bun": "latest",
+    "@types/pg": "^8.15.5",
+    "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4"
   },
   "peerDependencies": {
@@ -15,6 +23,7 @@
     "drizzle-orm": "^0.44.4",
     "drizzle-zod": "^0.8.3",
     "pg": "^8.16.3",
-    "zod": "^4.0.16"
+    "postgres": "^3.4.7",
+    "zod": "^4.0.17"
   }
 }
