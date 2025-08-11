@@ -93,9 +93,7 @@
         "employees_email_unique": {
           "name": "employees_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -107,13 +105,7 @@
     "public.department": {
       "name": "department",
       "schema": "public",
-      "values": [
-        "engineering",
-        "sales",
-        "marketing",
-        "hr",
-        "finance"
-      ]
+      "values": ["engineering", "sales", "marketing", "hr", "finance"]
     }
   },
   "schemas": {},

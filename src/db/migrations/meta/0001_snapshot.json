@@ -1,6 +1,6 @@
 {
-  "id": "e1cfb9b9-2330-40d0-9bdf-bdf3ef4275e0",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "2c1cae8f-0849-468a-83c0-ae1800c1ab53",
+  "prevId": "a7b7950f-5dca-41ad-af8d-cb01777ebbf5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -71,6 +71,12 @@
           "notNull": true,
           "default": true
         },
+        "company_id": {
+          "name": "company_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -86,14 +92,46 @@
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "employees_company_id_idx": {
+          "name": "employees_company_id_idx",
+          "columns": [
+            {
+              "expression": "company_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "employees_company_id_companies_id_fk": {
+          "name": "employees_company_id_companies_id_fk",
+          "tableFrom": "employees",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "employees_email_unique": {
           "name": "employees_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -105,7 +143,13 @@
     "public.department": {
       "name": "department",
       "schema": "public",
-      "values": ["engineering", "sales", "marketing", "hr", "finance"]
+      "values": [
+        "engineering",
+        "sales",
+        "marketing",
+        "hr",
+        "finance"
+      ]
     }
   },
   "schemas": {},
